@@ -1,0 +1,128 @@
+#!/bin/bash
+
+#  run.sh
+#  JAnalytics
+#
+#  Created by Saravanan S on 12/06/19.
+#  Copyright © 2019 zoho. All rights reserved.
+
+DIR="$(dirname $0)"
+
+COMMAND_PATH="\"$DIR/dsym_upload\""
+ZA_INFO_FILE_NAME="ZAnalytics-Config.plist"
+AP_INFO_FILE_NAME="$PRODUCT_SETTINGS_PATH"
+CM_AP_INFO_FILE_NAME="$TARGET_BUILD_DIR/$INFOPLIST_PATH"
+ZA_INFOPLIST_FILE=$(dirname "${PRODUCT_SETTINGS_PATH}")/${ZA_INFO_FILE_NAME}
+UPLOAD_SYMBOLS="true"
+
+while [ $# -gt 0 ]; do
+case "$1" in
+--api-key=*)
+API_KEY="${1#*=}"
+;;
+--debug-mode=*)
+DEBUG_MODE="${1#*=}"
+;;
+--upload-symbols=*)
+UPLOAD_SYMBOLS="${1#*=}"
+;;
+--skip-prompt-for=*)
+SKIP_PROMPT_FOR="${1#*=}"
+;;
+*)
+printf "**********************************\n"
+printf "* Error: Invalid argument passed.*\n"
+printf "**********************************\n"
+printf "'$1'\n"
+exit 1
+esac
+shift
+done
+
+Z_APP_CONFIG=$(/usr/libexec/PlistBuddy -c 'Print Z_APP_CONFIG' "${AP_INFO_FILE_NAME}" 2>/dev/null || printf "nil")
+
+if [ "${Z_APP_CONFIG}" == "nil" ]; then
+  $(/usr/libexec/PlistBuddy -c "Add :Z_APP_CONFIG dict " "${AP_INFO_FILE_NAME}" 2>/dev/null)
+  if [ "${API_KEY}" ]; then
+    $(/usr/libexec/PlistBuddy -c "Add :Z_APP_CONFIG:API_KEY string '${API_KEY}'" "${AP_INFO_FILE_NAME}" 2>/dev/null)
+  fi
+
+  if [ "${DEBUG_MODE}" ]; then
+    $(/usr/libexec/PlistBuddy -c "Add :Z_APP_CONFIG:ZA_DEBUG_MODE string '${DEBUG_MODE}'" "${AP_INFO_FILE_NAME}" 2>/dev/null)
+  else
+    $(/usr/libexec/PlistBuddy -c "Add :Z_APP_CONFIG:ZA_DEBUG_MODE string '1'" "${AP_INFO_FILE_NAME}" 2>/dev/null)
+  fi
+
+  $(/usr/libexec/PlistBuddy -c "Add :Z_APP_CONFIG:ZA_SHOULD_LOG bool false" "${AP_INFO_FILE_NAME}" 2>/dev/null)
+  $(/usr/libexec/PlistBuddy -c "Add :Z_APP_CONFIG:ZA_SHOULD_DETAIL_LOG bool false" "${AP_INFO_FILE_NAME}" 2>/dev/null)
+  $(/usr/libexec/PlistBuddy -c "Add :Z_APP_CONFIG:ZA_FLUSH_INTERVAL integer 60" "${AP_INFO_FILE_NAME}" 2>/dev/null)
+  $(/usr/libexec/PlistBuddy -c "Add :Z_APP_CONFIG:ZA_APP_GROUP_IDENTIFIER string ''" "${AP_INFO_FILE_NAME}" 2>/dev/null)
+  $(/usr/libexec/PlistBuddy -c "Add :Z_APP_CONFIG:ZA_ENABLE_ON_DEVICE_SYMBOLICATION bool false" "${AP_INFO_FILE_NAME}"  2>/dev/null)
+
+else
+
+  if [ "${API_KEY}" ]; then
+    ZA_API_KEY=$(/usr/libexec/PlistBuddy -c 'Print Z_APP_CONFIG:API_KEY' "${AP_INFO_FILE_NAME}" 2>/dev/null || printf "nil")
+    if [ "${API_KEY}" != "${ZA_API_KEY}" ]; then
+      if [ "${ZA_API_KEY}" == "nil" ]; then
+        /usr/libexec/PlistBuddy -c "Add Z_APP_CONFIG:API_KEY string '${API_KEY}'" "${AP_INFO_FILE_NAME}"
+      else
+        /usr/libexec/PlistBuddy -c "Set Z_APP_CONFIG:API_KEY '${API_KEY}'" "${AP_INFO_FILE_NAME}"
+      fi
+      CM_ZA_API_KEY=$(/usr/libexec/PlistBuddy -c 'Print Z_APP_CONFIG:API_KEY' "${CM_AP_INFO_FILE_NAME}" 2>/dev/null || printf "nil")
+      if [ "${CM_ZA_API_KEY}" == "nil" ]; then
+        /usr/libexec/PlistBuddy -c "Add Z_APP_CONFIG:API_KEY string '${API_KEY}'" "${CM_AP_INFO_FILE_NAME}"
+      else
+        /usr/libexec/PlistBuddy -c "Set Z_APP_CONFIG:API_KEY '${API_KEY}'" "${CM_AP_INFO_FILE_NAME}"
+      fi
+    fi
+  fi
+
+  if [ "${DEBUG_MODE}" ]; then
+  ZA_DEBUG_MODE=$(/usr/libexec/PlistBuddy -c 'Print Z_APP_CONFIG:ZA_DEBUG_MODE' "${AP_INFO_FILE_NAME}" 2>/dev/null || printf "nil")
+    if [ "${DEBUG_MODE}" != "${ZA_DEBUG_MODE}" ]; then
+      if [ "${ZA_DEBUG_MODE}" == "nil" ]; then
+        /usr/libexec/PlistBuddy -c "Add Z_APP_CONFIG:ZA_DEBUG_MODE string '${DEBUG_MODE}'" "${AP_INFO_FILE_NAME}"
+      else
+        /usr/libexec/PlistBuddy -c "Set Z_APP_CONFIG:ZA_DEBUG_MODE '${DEBUG_MODE}'" "${AP_INFO_FILE_NAME}"
+      fi
+
+    CM_ZA_DEBUG_MODE=$(/usr/libexec/PlistBuddy -c 'Print Z_APP_CONFIG:ZA_DEBUG_MODE' "${CM_AP_INFO_FILE_NAME}" 2>/dev/null || printf "nil")
+      if [ "${CM_ZA_DEBUG_MODE}" == "nil" ]; then
+        /usr/libexec/PlistBuddy -c "Add Z_APP_CONFIG:ZA_DEBUG_MODE string '${DEBUG_MODE}'" "${CM_AP_INFO_FILE_NAME}"
+      else
+        /usr/libexec/PlistBuddy -c "Set Z_APP_CONFIG:ZA_DEBUG_MODE '${DEBUG_MODE}'" "${CM_AP_INFO_FILE_NAME}"
+      fi
+
+    fi
+  fi
+fi
+
+if [ "${UPLOAD_SYMBOLS}" == "true" ]; then
+  eval $COMMAND_PATH --skip-prompt=1
+fi
+
+
+#if [ "${UPLOAD_SYMBOLS}" == "true" ]; then
+#  if [ "${SKIP_PROMPT_FOR}" == "${CONFIGURATION}" ]; then
+#    eval $COMMAND_PATH --skip-prompt=1
+#  else
+#    eval $COMMAND_PATH
+#  fi
+#else
+#if [ "${SKIP_PROMPT_FOR}" == "${CONFIGURATION}" ]; then
+##Assuming that the developer have set upload symbol false for development not for the App store configuration
+#  eval $COMMAND_PATH --skip-prompt=1
+#else
+#  printf "************************************************************************************\n"
+#  printf "* Skipping the process of uploading dSYMs to the server for '${CONFIGURATION}' mode*\n"
+#  printf "************************************************************************************\n"
+#fi
+#
+#fi
+
+return_code=$?
+
+if [ $return_code != 0 ]; then
+  exit $return_code
+fi
