@@ -20,7 +20,8 @@ spec.license      = "MIT"
 
 spec.author       = { "Site24x7" => "support@site24x7.com" }
 
-spec.source        = { :http => 'https://raw.githubusercontent.com/site24x7/MobileAPM-IOS-SDK/v0.0.1/APM.framework.zip'}
+spec.source        = { :http => 'https://raw.githubusercontent.com/site24x7/MobileAPM-IOS-SDK/v1.0.0/APM.framework.zip'}
+
 spec.vendored_frameworks = 'APM.framework'
 
 spec.ios.deployment_target = '9.0'
