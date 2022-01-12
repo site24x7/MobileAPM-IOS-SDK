@@ -20,9 +20,9 @@ spec.license      = "MIT"
 
 spec.author       = { "Site24x7" => "support@site24x7.com" }
 
-spec.source        = { :http => 'https://github.com/site24x7/MobileAPM-IOS-SDK/raw/master/ZAnalytics.framework.zip'}
+spec.source        = { :http => 'https://github.com/site24x7/MobileAPM-IOS-SDK/raw/master/ZAnalytics.xcframework.zip'}
 
-spec.vendored_frameworks = 'ZAnalytics.framework'
+spec.vendored_frameworks = 'ZAnalytics.xcframework'
 
 spec.public_header_files = "Headers/*.h"
 
