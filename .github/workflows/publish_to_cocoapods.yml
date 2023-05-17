@@ -1,0 +1,17 @@
+name: CI
+on:
+  release:
+    types: [published]
+    
+jobs:
+  build:
+    runs-on: macOS-latest
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: Publish to CocoaPod register
+      env:
+        COCOAPODS_TRUNK_TOKEN: ${{ secrets.COCOAPODS_TRUNK_TOKEN }}
+      run: |
+        pod trunk push Site24x7APM/2.1.1/Site24x7APM.podspec --skip-import-validation --allow-warnings
+        echo uploaded to cocoapods
