@@ -13,5 +13,5 @@ jobs:
       env:
         COCOAPODS_TRUNK_TOKEN: ${{ secrets.COCOAPODS_TRUNK_TOKEN }}
       run: |
-        pod trunk push Site24x7APM/2.2.3/Site24x7APM.podspec --skip-import-validation --allow-warnings
+        pod trunk push Site24x7APM/2.2.4/Site24x7APM.podspec --skip-import-validation --allow-warnings
         echo uploaded to cocoapods
