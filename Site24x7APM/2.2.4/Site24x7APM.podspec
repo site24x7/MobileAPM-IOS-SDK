@@ -24,6 +24,6 @@ spec.source        = { :http => 'https://raw.githubusercontent.com/site24x7/Mobi
 
 spec.vendored_frameworks = 'APM.xcframework'
 
-spec.ios.deployment_target = '9.0'
+spec.ios.deployment_target = '14.0'
   
 end
